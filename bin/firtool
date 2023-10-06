@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Check if PROJECT_ROOT is set
+if [ -z "$PROJECT_ROOT" ]; then
+  echo "Error: PROJECT_ROOT environment variable is not set."
+  exit 1
+fi
+
+# Get the current directory
+current_dir="$(pwd)"
+
+# Check if current_dir is a subdirectory of PROJECT_ROOT
+if [[ "$current_dir" == "$PROJECT_ROOT"* ]]; then
+  # Calculate the relative path within PROJECT_ROOT
+  relative_path="${current_dir#$PROJECT_ROOT}"
+  relative_path="${relative_path#/}"  # Remove leading slash if present
+  #echo "Current directory is a subdirectory of PROJECT_ROOT."
+  echo "Relative path within PROJECT_ROOT: $relative_path"
+else
+  echo "Current directory is not a subdirectory of PROJECT_ROOT."
+  exit 1
+fi
+
+docker run -it --user $(id -u):$(id -g) -v ${PROJECT_ROOT}:/work -w /work/${relative_path} firtool-container:0.1 $*
