@@ -21,4 +21,4 @@ else
   exit 1
 fi
 
-docker run -it --user $(id -u):$(id -g) -v ${PROJECT_ROOT}:/work -w /work/${relative_path} firtool-container:0.1 $*
+docker run -it --user $(id -u):$(id -g) -v ${PROJECT_ROOT}:/work -w /work/${relative_path} hutch31/firtool-container:0.1 $*
