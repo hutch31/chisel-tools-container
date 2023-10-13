@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# This script creates a firtool wrapper to launch firtool within a Docker container.  This assumes that
+# firtool is being used within a larger project, and therefore the script attempts to mount the project
+# workspace into the container so that firtool can write files outside the current directory.  The
+# PROJECT_ROOT variable defines the root of the project workspace.
+#
+# If PROJECT_ROOT is not defined, mounts the current directory as the work directory.  Note that if firtool
+# then attempts to access directories higher than the current directory the command will fail.
+#
+
+current_dir="$(pwd)"
+
+# Check if PROJECT_ROOT is set
+if [ -z "$PROJECT_ROOT" ]; then
+  #echo "Error: PROJECT_ROOT environment variable is not set."
+  #exit 1
+  relative_path=""
+  PROJECT_ROOT=${current_dir}
+else
+  # Get the current directory
+
+  # Check if current_dir is a subdirectory of PROJECT_ROOT
+  if [[ "$current_dir" == "$PROJECT_ROOT"* ]]; then
+    # Calculate the relative path within PROJECT_ROOT
+    relative_path="${current_dir#$PROJECT_ROOT}"
+    relative_path="${relative_path#/}"  # Remove leading slash if present
+    #echo "Current directory is a subdirectory of PROJECT_ROOT."
+    #echo "Relative path within PROJECT_ROOT: $relative_path"
+  else
+    echo "Current directory is not a subdirectory of PROJECT_ROOT."
+    exit 1
+  fi
+fi
+
+
+# Launch container to run firtool
+docker run -i --user $(id -u):$(id -g) -v ${PROJECT_ROOT}:/work -w /work/${relative_path} hutch31/chisel-cmdline-container:latest emacs --batch $*
