@@ -3,36 +3,21 @@
 # This script creates a firtool wrapper to launch firtool within a Docker container.  This assumes that
 # firtool is being used within a larger project, and therefore the script attempts to mount the project
 # workspace into the container so that firtool can write files outside the current directory.  The
-# PROJECT_ROOT variable defines the root of the project workspace.
-#
-# If PROJECT_ROOT is not defined, mounts the current directory as the work directory.  Note that if firtool
-# then attempts to access directories higher than the current directory the command will fail.
-#
+# wrapper assumes the workspace is in a git repository, and uses the root of the repository as the mount
+# point.
 
-current_dir="$(pwd)"
-
-# Check if PROJECT_ROOT is set
-if [ -z "$PROJECT_ROOT" ]; then
-  #echo "Error: PROJECT_ROOT environment variable is not set."
-  #exit 1
-  relative_path=""
-  PROJECT_ROOT=${current_dir}
+# Check if the current directory is part of a Git repository
+if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    # Get the root directory of the current Git repository
+    GIT_ROOT=$(git rev-parse --show-toplevel)
+    
+    # Set the relative path based on the Git root
+    relative_path=$(realpath --relative-to="$GIT_ROOT" .)
 else
-  # Get the current directory
-
-  # Check if current_dir is a subdirectory of PROJECT_ROOT
-  if [[ "$current_dir" == "$PROJECT_ROOT"* ]]; then
-    # Calculate the relative path within PROJECT_ROOT
-    relative_path="${current_dir#$PROJECT_ROOT}"
-    relative_path="${relative_path#/}"  # Remove leading slash if present
-    #echo "Current directory is a subdirectory of PROJECT_ROOT."
-    #echo "Relative path within PROJECT_ROOT: $relative_path"
-  else
-    echo "Current directory is not a subdirectory of PROJECT_ROOT."
-    exit 1
-  fi
+    # Default to using '.' if not in a Git repository
+    relative_path="."
+    GIT_ROOT="."
 fi
 
-
 # Launch container to run firtool
-docker run -i --user $(id -u):$(id -g) -v ${PROJECT_ROOT}:/work -w /work/${relative_path} hutch31/firtool-container:0.1 $*
+docker run --rm -i --user $(id -u):$(id -g) -v ${GIT_ROOT}:/work -w /work/${relative_path} hutch31/firtool-container:1.54 $*

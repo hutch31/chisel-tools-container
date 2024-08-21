@@ -1,4 +1,4 @@
-VERSION=1.82
+VERSION=1.54
 
 target:
 	docker build -t hutch31/firtool-container:${VERSION} .
